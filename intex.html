@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Manga Editor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="toolbar">
+        <input type="file" id="imageLoader" accept="image/*" multiple>
+        
+        <button onclick="prevPage()">⬅️ Geri</button>
+        <span id="pageInfo">0 / 0</span>
+        <button onclick="nextPage()">İleri ➡️</button>
+
+        <button onclick="addText()" style="margin-left:20px;">+ Metin Ekle</button>
+        <button onclick="exportJSON()" style="background:green; color:white;">JSON Çıktısı Al</button>
+    </div>
+    
+    <div id="canvas-container">
+        <img id="mangaPage" src="" style="display:none;">
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
