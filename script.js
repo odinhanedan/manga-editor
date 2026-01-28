@@ -59,79 +59,88 @@ function addText() {
     div.contentEditable = true;
     div.innerText = 'Yazı Yazın';
     
-    // Ekranın ortasına yerleştir
+    // Sayfanın ortasına yerleştir
     div.style.left = '50%';
-    div.style.top = '50%';
+    div.style.top = '20%';
 
     setupDraggable(div);
     canvas.appendChild(div);
 }
 
-// 🚀 AI İLE TARAMA (İNGİLİZCE)
+// 🚀 AI İLE TARAMA (İNGİLİZCE VE GELİŞMİŞ KOORDİNAT)
 async function runOCR() {
     if (!mangaPage.src) { alert("Önce bir resim yüklemelisin!"); return; }
     
     let oldText = pageInfo.innerText;
-    pageInfo.innerText = "🤖 AI Tarıyor...";
+    pageInfo.innerText = "🤖 AI Analiz Ediyor (Satır Satır)...";
 
     try {
-        // İngilizce (eng) için worker oluşturuluyor
-        const { createWorker } = Tesseract;
-        const worker = await createWorker('eng');
-        const { data: { blocks } } = await worker.recognize(mangaPage.src);
+        const worker = await Tesseract.createWorker('eng');
+        const { data } = await worker.recognize(mangaPage.src);
         
-        blocks.forEach(block => {
-            if (block.text.trim().length > 1) {
-                createAutoOverlay(block.text, block.bbox);
+        // 'lines' kullanarak metinleri ayrı ayrı kutulara bölüyoruz
+        data.lines.forEach(line => {
+            if (line.text.trim().length > 1) {
+                createAutoOverlay(line.text, line.bbox);
             }
         });
 
         await worker.terminate();
         pageInfo.innerText = oldText;
-        alert("İngilizce metinler başarıyla yakalandı!");
+        alert("Tarama Tamamlandı!");
     } catch (error) {
         console.error("AI Hatası:", error);
         pageInfo.innerText = "Hata!";
-        alert("Yapay zeka şu an çalışamıyor. Konsolu (F12) kontrol et.");
+        alert("AI şu an çalışamıyor.");
     }
 }
 
+// AI KUTULARINI RESİM ÜZERİNE OTURTMA
 function createAutoOverlay(text, bbox) {
     let div = document.createElement('div');
     div.className = 'text-overlay';
     div.contentEditable = true;
     div.innerText = text;
 
-    // AI'dan gelen koordinatları ayarla
-    div.style.left = bbox.x0 + 'px';
-    div.style.top = bbox.y0 + 'px';
-    div.style.minWidth = (bbox.x1 - bbox.x0) + 'px';
+    // Ölçeklendirme hesabı: Resim ekranda küçültülmüş olsa bile doğru yeri bulur
+    const rect = mangaPage.getBoundingClientRect();
+    const scaleX = rect.width / mangaPage.naturalWidth;
+    const scaleY = rect.height / mangaPage.naturalHeight;
+
+    div.style.left = (bbox.x0 * scaleX) + 'px';
+    div.style.top = (bbox.y0 * scaleY) + 'px';
+    div.style.minWidth = ((bbox.x1 - bbox.x0) * scaleX) + 'px';
 
     setupDraggable(div);
     canvas.appendChild(div);
 }
 
-// JSON ÇIKTISI ALMA
+// JSON ÇIKTISI ALMA (GELİŞMİŞ)
 function exportJSON() {
     let overlays = document.querySelectorAll('.text-overlay');
-    if (overlays.length === 0) { alert("Metin yok!"); return; }
+    if (overlays.length === 0) { alert("Dışa aktarılacak metin yok!"); return; }
 
+    let currentFileName = images[currentIndex] ? images[currentIndex].name : "manga_sayfa";
     let data = {
-        imageName: images[currentIndex].name,
+        imageName: currentFileName,
         translations: []
     };
 
     overlays.forEach(el => {
+        // WordPress'e aktarırken sorun çıkmaması için yüzdelik (%) olarak kaydeder
+        let xPercent = (parseFloat(el.style.left) / mangaPage.clientWidth) * 100;
+        let yPercent = (parseFloat(el.style.top) / mangaPage.clientHeight) * 100;
+
         data.translations.push({
             text: el.innerText,
-            x: el.style.left,
-            y: el.style.top
+            x: xPercent.toFixed(2) + "%",
+            y: yPercent.toFixed(2) + "%"
         });
     });
 
     let blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     let link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `data_sayfa_${currentIndex + 1}.json`;
+    link.download = `${currentFileName.split('.')[0]}_data.json`;
     link.click();
 }
