@@ -6,6 +6,7 @@ let pageInfo = document.getElementById('pageInfo');
 let images = [];
 let currentIndex = 0;
 
+// DOSYA YÜKLEME SİSTEMİ
 imageLoader.addEventListener('change', function(e) {
     images = Array.from(e.target.files);
     if (images.length > 0) {
@@ -28,7 +29,7 @@ function loadPage(index) {
 function nextPage() { if (currentIndex < images.length - 1) { currentIndex++; loadPage(currentIndex); } }
 function prevPage() { if (currentIndex > 0) { currentIndex--; loadPage(currentIndex); } }
 
-// ORTAK SÜRÜKLEME FONKSİYONU
+// ORTAK SÜRÜKLEME SİSTEMİ
 function setupDraggable(div) {
     div.onmousedown = function(e) {
         let shiftX = e.clientX - div.getBoundingClientRect().left;
@@ -57,93 +58,80 @@ function addText() {
     div.className = 'text-overlay';
     div.contentEditable = true;
     div.innerText = 'Yazı Yazın';
-
-    let rect = canvas.getBoundingClientRect();
-    let spawnX = (window.innerWidth / 2) - rect.left;
-    let spawnY = (window.innerHeight / 2) - rect.top;
-
-    div.style.left = spawnX + 'px';
-    div.style.top = spawnY + 'px';
+    
+    // Ekranın ortasına yerleştir
+    div.style.left = '50%';
+    div.style.top = '50%';
 
     setupDraggable(div);
     canvas.appendChild(div);
 }
 
-// AI İLE TARAMA FONKSİYONU
+// 🚀 AI İLE TARAMA (İNGİLİZCE)
 async function runOCR() {
     if (!mangaPage.src) { alert("Önce bir resim yüklemelisin!"); return; }
     
-    const statusLabel = document.getElementById('pageInfo');
-    const originalText = statusLabel.innerText;
-    statusLabel.innerText = "Yapay Zeka Tarıyor... Lütfen Bekleyin...";
+    let oldText = pageInfo.innerText;
+    pageInfo.innerText = "🤖 AI Tarıyor...";
 
     try {
-        // 'jpn' olan yeri 'eng' (English) olarak güncelledik
-        const worker = await Tesseract.createWorker('eng'); 
+        // İngilizce (eng) için worker oluşturuluyor
+        const { createWorker } = Tesseract;
+        const worker = await createWorker('eng');
         const { data: { blocks } } = await worker.recognize(mangaPage.src);
         
         blocks.forEach(block => {
-            // Sadece anlamlı metinleri (boşluk olmayanları) ekle
-            if (block.text.trim().length > 0) {
+            if (block.text.trim().length > 1) {
                 createAutoOverlay(block.text, block.bbox);
             }
         });
 
         await worker.terminate();
-        statusLabel.innerText = originalText;
-        alert("İngilizce tarama bitti! Balonlar bulundu.");
+        pageInfo.innerText = oldText;
+        alert("İngilizce metinler başarıyla yakalandı!");
     } catch (error) {
-        console.error("OCR Hatası:", error);
-        statusLabel.innerText = "Hata oluştu!";
+        console.error("AI Hatası:", error);
+        pageInfo.innerText = "Hata!";
+        alert("Yapay zeka şu an çalışamıyor. Konsolu (F12) kontrol et.");
     }
 }
 
-// AI'DAN GELEN VERİLERİ EKRANA DİZME
 function createAutoOverlay(text, bbox) {
     let div = document.createElement('div');
     div.className = 'text-overlay';
     div.contentEditable = true;
     div.innerText = text;
 
-    // AI'nın bulduğu yerlere yerleştir
+    // AI'dan gelen koordinatları ayarla
     div.style.left = bbox.x0 + 'px';
     div.style.top = bbox.y0 + 'px';
-    
-    // Genişlik ve yükseklik ayarı (AI'nın bulduğu balon boyutuna göre)
     div.style.minWidth = (bbox.x1 - bbox.x0) + 'px';
 
     setupDraggable(div);
     canvas.appendChild(div);
 }
 
+// JSON ÇIKTISI ALMA
 function exportJSON() {
     let overlays = document.querySelectorAll('.text-overlay');
-    if (overlays.length === 0) { alert("Önce metin eklemelisin!"); return; }
+    if (overlays.length === 0) { alert("Metin yok!"); return; }
 
-    let currentFileName = images[currentIndex].name;
     let data = {
-        imageName: currentFileName,
-        pageNumber: currentIndex + 1,
+        imageName: images[currentIndex].name,
         translations: []
     };
 
     overlays.forEach(el => {
-        let x = (parseFloat(el.style.left) / mangaPage.clientWidth) * 100;
-        let y = (parseFloat(el.style.top) / mangaPage.clientHeight) * 100;
         data.translations.push({
             text: el.innerText,
-            x: x.toFixed(2) + "%",
-            y: y.toFixed(2) + "%"
+            x: el.style.left,
+            y: el.style.top
         });
     });
 
-    let jsonContent = JSON.stringify(data, null, 2);
-    let blob = new Blob([jsonContent], { type: "application/json" });
-    let url = URL.createObjectURL(blob);
+    let blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     let link = document.createElement("a");
-    link.download = `${currentFileName.split('.')[0]}_data.json`;
-    link.href = url;
+    link.href = URL.createObjectURL(blob);
+    link.download = `data_sayfa_${currentIndex + 1}.json`;
     link.click();
 }
-
-
