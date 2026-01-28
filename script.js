@@ -78,19 +78,20 @@ async function runOCR() {
     statusLabel.innerText = "Yapay Zeka Tarıyor... Lütfen Bekleyin...";
 
     try {
-        const worker = await Tesseract.createWorker('jpn'); // Japonca için
+        // 'jpn' olan yeri 'eng' (English) olarak güncelledik
+        const worker = await Tesseract.createWorker('eng'); 
         const { data: { blocks } } = await worker.recognize(mangaPage.src);
         
         blocks.forEach(block => {
-            // Eğer metin çok kısaysa (gürültü ise) ekleme
-            if (block.text.trim().length > 1) {
+            // Sadece anlamlı metinleri (boşluk olmayanları) ekle
+            if (block.text.trim().length > 0) {
                 createAutoOverlay(block.text, block.bbox);
             }
         });
 
         await worker.terminate();
         statusLabel.innerText = originalText;
-        alert("Tarama bitti! Balonlar bulundu.");
+        alert("İngilizce tarama bitti! Balonlar bulundu.");
     } catch (error) {
         console.error("OCR Hatası:", error);
         statusLabel.innerText = "Hata oluştu!";
@@ -144,3 +145,4 @@ function exportJSON() {
     link.href = url;
     link.click();
 }
+
