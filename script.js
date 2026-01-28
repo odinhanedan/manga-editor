@@ -28,33 +28,16 @@ function loadPage(index) {
 function nextPage() { if (currentIndex < images.length - 1) { currentIndex++; loadPage(currentIndex); } }
 function prevPage() { if (currentIndex > 0) { currentIndex--; loadPage(currentIndex); } }
 
-// METİN EKLEME VE YENİ SÜRÜKLEME SİSTEMİ
-function addText() {
-    let div = document.createElement('div');
-    div.className = 'text-overlay';
-    div.contentEditable = true;
-    div.innerText = 'Yazı Yazın';
-
-    let rect = canvas.getBoundingClientRect();
-    // Ekranın ortasını, sayfa kaydırmasını (scroll) hesaba katarak bul
-    let spawnX = (window.innerWidth / 2) - rect.left;
-    let spawnY = (window.innerHeight / 2) - rect.top;
-
-    div.style.left = spawnX + 'px';
-    div.style.top = spawnY + 'px';
-
-    // Yeni ve sağlam sürükleme mantığı
+// ORTAK SÜRÜKLEME FONKSİYONU
+function setupDraggable(div) {
     div.onmousedown = function(e) {
-        // Tıklanan noktanın kutu içindeki farkını al
         let shiftX = e.clientX - div.getBoundingClientRect().left;
         let shiftY = e.clientY - div.getBoundingClientRect().top;
 
         function moveAt(clientX, clientY) {
             let canvasRect = canvas.getBoundingClientRect();
-            let newX = clientX - canvasRect.left - shiftX;
-            let newY = clientY - canvasRect.top - shiftY;
-            div.style.left = newX + 'px';
-            div.style.top = newY + 'px';
+            div.style.left = (clientX - canvasRect.left - shiftX) + 'px';
+            div.style.top = (clientY - canvasRect.top - shiftY) + 'px';
         }
 
         function onMouseMove(e) { moveAt(e.clientX, e.clientY); }
@@ -65,19 +48,80 @@ function addText() {
             document.onmouseup = null;
         };
     };
+    div.ondragstart = function() { return false; };
+}
 
-    div.ondragstart = function() { return false; }; // Tarayıcının kendi sürüklemesini engelle
+// MANUEL METİN EKLEME
+function addText() {
+    let div = document.createElement('div');
+    div.className = 'text-overlay';
+    div.contentEditable = true;
+    div.innerText = 'Yazı Yazın';
+
+    let rect = canvas.getBoundingClientRect();
+    let spawnX = (window.innerWidth / 2) - rect.left;
+    let spawnY = (window.innerHeight / 2) - rect.top;
+
+    div.style.left = spawnX + 'px';
+    div.style.top = spawnY + 'px';
+
+    setupDraggable(div);
     canvas.appendChild(div);
 }
 
-// JSON ÇIKTISI (RESİM ADI EKLENMİŞ HALİ)
+// AI İLE TARAMA FONKSİYONU
+async function runOCR() {
+    if (!mangaPage.src) { alert("Önce bir resim yüklemelisin!"); return; }
+    
+    const statusLabel = document.getElementById('pageInfo');
+    const originalText = statusLabel.innerText;
+    statusLabel.innerText = "Yapay Zeka Tarıyor... Lütfen Bekleyin...";
+
+    try {
+        const worker = await Tesseract.createWorker('jpn'); // Japonca için
+        const { data: { blocks } } = await worker.recognize(mangaPage.src);
+        
+        blocks.forEach(block => {
+            // Eğer metin çok kısaysa (gürültü ise) ekleme
+            if (block.text.trim().length > 1) {
+                createAutoOverlay(block.text, block.bbox);
+            }
+        });
+
+        await worker.terminate();
+        statusLabel.innerText = originalText;
+        alert("Tarama bitti! Balonlar bulundu.");
+    } catch (error) {
+        console.error("OCR Hatası:", error);
+        statusLabel.innerText = "Hata oluştu!";
+    }
+}
+
+// AI'DAN GELEN VERİLERİ EKRANA DİZME
+function createAutoOverlay(text, bbox) {
+    let div = document.createElement('div');
+    div.className = 'text-overlay';
+    div.contentEditable = true;
+    div.innerText = text;
+
+    // AI'nın bulduğu yerlere yerleştir
+    div.style.left = bbox.x0 + 'px';
+    div.style.top = bbox.y0 + 'px';
+    
+    // Genişlik ve yükseklik ayarı (AI'nın bulduğu balon boyutuna göre)
+    div.style.minWidth = (bbox.x1 - bbox.x0) + 'px';
+
+    setupDraggable(div);
+    canvas.appendChild(div);
+}
+
 function exportJSON() {
     let overlays = document.querySelectorAll('.text-overlay');
     if (overlays.length === 0) { alert("Önce metin eklemelisin!"); return; }
 
-    let currentFileName = images[currentIndex].name; // RESİM ADINI ALDIK
+    let currentFileName = images[currentIndex].name;
     let data = {
-        imageName: currentFileName, // Hangi resim olduğu artık içinde yazıyor!
+        imageName: currentFileName,
         pageNumber: currentIndex + 1,
         translations: []
     };
@@ -99,31 +143,4 @@ function exportJSON() {
     link.download = `${currentFileName.split('.')[0]}_data.json`;
     link.href = url;
     link.click();
-
-}
-
-async function runOCR() {
-    const statusLabel = document.getElementById('pageInfo');
-    const originalText = statusLabel.innerText;
-    
-    statusLabel.innerText = "Yapay Zeka Tarıyor... Lütfen Bekleyin...";
-
-    // Tesseract ile resmi tara
-    const worker = await Tesseract.createWorker('jpn'); // Japonca için 'jpn', İngilizce için 'eng'
-    const { data: { blocks } } = await worker.recognize(mangaPage.src);
-    
-    blocks.forEach(block => {
-        // Her bulunan metin bloğu için otomatik bir kutu oluştur
-        createAutoOverlay(block.text, block.bbox);
-    });
-
-    await worker.terminate();
-    statusLabel.innerText = originalText;
-    alert("Tarama tamamlandı! Bulunan metinler yerleştirildi.");
-}
-
-function createAutoOverlay(text, bbox) {
-    // Bu fonksiyon, AI'dan gelen koordinatları bizim kutu sistemimize çevirecek
-    // (Bunu bir sonraki adımda detaylandıracağız çünkü koordinat hesaplaması hassas bir iş)
-    console.log("Bulunan Metin:", text, "Konum:", bbox);
 }
