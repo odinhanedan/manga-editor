@@ -99,4 +99,31 @@ function exportJSON() {
     link.download = `${currentFileName.split('.')[0]}_data.json`;
     link.href = url;
     link.click();
+
+}
+
+async function runOCR() {
+    const statusLabel = document.getElementById('pageInfo');
+    const originalText = statusLabel.innerText;
+    
+    statusLabel.innerText = "Yapay Zeka Tarıyor... Lütfen Bekleyin...";
+
+    // Tesseract ile resmi tara
+    const worker = await Tesseract.createWorker('jpn'); // Japonca için 'jpn', İngilizce için 'eng'
+    const { data: { blocks } } = await worker.recognize(mangaPage.src);
+    
+    blocks.forEach(block => {
+        // Her bulunan metin bloğu için otomatik bir kutu oluştur
+        createAutoOverlay(block.text, block.bbox);
+    });
+
+    await worker.terminate();
+    statusLabel.innerText = originalText;
+    alert("Tarama tamamlandı! Bulunan metinler yerleştirildi.");
+}
+
+function createAutoOverlay(text, bbox) {
+    // Bu fonksiyon, AI'dan gelen koordinatları bizim kutu sistemimize çevirecek
+    // (Bunu bir sonraki adımda detaylandıracağız çünkü koordinat hesaplaması hassas bir iş)
+    console.log("Bulunan Metin:", text, "Konum:", bbox);
 }
