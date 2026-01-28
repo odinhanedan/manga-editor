@@ -1,0 +1,32 @@
+body { font-family: sans-serif; background: #f0f0f0; margin: 20px; text-align: center; }
+.toolbar { background: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: center; gap: 10px; align-items: center; }
+#canvas-container { position: relative; display: inline-block; background: white; border: 1px solid #ccc; }
+#mangaPage { max-width: 800px; height: auto; }
+.text-overlay {
+    position: absolute;
+    cursor: move;
+    padding: 5px;
+    font-weight: bold;
+    color: black;
+    text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff;
+    min-width: 50px;
+    border: 1px dashed transparent;
+}
+.text-overlay:hover { border-color: blue; }
+
+.toolbar { 
+    background: white; 
+    padding: 15px; 
+    border-radius: 0 0 8px 8px; /* Alt köşeleri yuvarladık */
+    margin-bottom: 20px; 
+    display: flex; 
+    justify-content: center; 
+    gap: 10px; 
+    align-items: center;
+    
+    /* SABİTLEME KODLARI */
+    position: sticky; 
+    top: 0; 
+    z-index: 1000; /* Diğer her şeyin üstünde kalması için */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1); /* Hafif gölge ekledik */
+}
