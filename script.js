@@ -123,44 +123,16 @@ function addText() {
     let div = document.createElement('div');
     div.className = 'text-overlay';
     div.contentEditable = true;
-    div.innerText = 'New Text';
+    div.innerText = 'Yazı Yazın';
     
-    const container = document.getElementById('canvas-container');
-    
-    // 📏 EKRANIN GÖRÜNEN ORTA NOKTASINI HESAPLA
-    // window.scrollY: Sayfayı ne kadar aşağı kaydırdığın
-    // window.innerHeight / 2: Ekran yüksekliğinin yarısı
-    // container.offsetTop: Resmin sayfanın en başından uzaklığı
-    
-    let currentScroll = window.scrollY;
-    let viewportHeight = window.innerHeight;
-    let containerTop = container.offsetTop;
-
-    // Matematik: (O anki kaydırma + Ekran yarısı) - Resmin başladığı yer
-    let exactCenterY = (currentScroll + (viewportHeight / 2)) - containerTop;
-    let exactCenterX = (window.innerWidth / 2) - container.getBoundingClientRect().left;
-
-    // Stiller
-    div.style.position = 'absolute';
-    div.style.left = (exactCenterX - 75) + 'px'; // 75 kutu genişliğinin yarısı
-    div.style.top = (exactCenterY - 20) + 'px';  // 20 kutu yüksekliğinin yarısı
-    
-    // Görünürlük için olmazsa olmazlar
-    div.style.width = '150px';
-    div.style.minHeight = '40px';
-    div.style.backgroundColor = 'white';
-    div.style.color = 'black';
-    div.style.border = '2px solid #ff0000'; // Kırmızı yapalım ki hemen fark et
-    div.style.zIndex = '1000';
-    div.style.padding = '5px';
-    div.style.textAlign = 'center';
-    div.style.display = 'flex';
-    div.style.alignItems = 'center';
-    div.style.justifyContent = 'center';
+    // Sayfanın ortasına yerleştir
+    div.style.left = '50%';
+    div.style.top = '20%';
 
     setupDraggable(div);
-    container.appendChild(div);
+    canvas.appendChild(div);
 }
+
 
 
 
