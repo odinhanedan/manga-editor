@@ -126,28 +126,25 @@ function addText() {
     div.innerText = 'New Text';
     
     const container = document.getElementById('canvas-container');
+    const rect = container.getBoundingClientRect();
 
-    // 1. Kutuyu önce "Görünür Ekranın" (Viewport) tam ortasına yerleştiriyoruz
-    // Resmin neresinde olduğun hiç önemli değil, o an baktığın camın ortası.
-    let screenX = window.innerWidth / 2;
-    let screenY = window.innerHeight / 2;
+    // 🎯 HİLE BURADA: 
+    // window.innerHeight / 2 -> Ekran yüksekliğinin tam ortası.
+    // rect.top -> Konteynırın ekranın üstüne olan uzaklığı.
+    // Bu ikisini birbirinden çıkarınca, resmin o an baktığın kısmındaki Y koordinatını buluruz.
+    
+    let finalX = (window.innerWidth / 2) - rect.left - 75; 
+    let finalY = (window.innerHeight / 2) - rect.top - 20;
 
-    // 2. Bu noktanın "Resim (Container)" üzerindeki karşılığını buluyoruz
-    let rect = container.getBoundingClientRect();
-    let finalX = screenX - rect.left - 75; // 75 kutu genişlik yarısı
-    let finalY = screenY - rect.top - 20;  // 20 kutu yükseklik yarısı
-
-    // 3. Stilleri basıyoruz
-    div.style.position = 'absolute';
     div.style.left = finalX + 'px';
     div.style.top = finalY + 'px';
+    
+    // Görünürlük için ekstra stiller (Senin CSS'ine ek olarak)
     div.style.width = '150px';
     div.style.minHeight = '40px';
     div.style.backgroundColor = 'white';
-    div.style.color = 'black';
     div.style.border = '2px solid #007bff';
     div.style.zIndex = '9999';
-    div.style.textAlign = 'center';
     div.style.display = 'flex';
     div.style.alignItems = 'center';
     div.style.justifyContent = 'center';
