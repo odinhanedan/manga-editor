@@ -125,26 +125,30 @@ function addText() {
     div.contentEditable = true;
     div.innerText = 'New Text';
     
-    // 📏 EKRAN HESAPLAMA (Kutuyu o an baktığın yere koyar)
     const container = document.getElementById('canvas-container');
     const containerRect = container.getBoundingClientRect();
     
-    // Ekranın orta noktasını bulup container'a göre oranlıyoruz
-    let centerX = (window.innerWidth / 2) - containerRect.left - 75; // 75 = genişliğin yarısı
-    let centerY = (window.innerHeight / 2) - containerRect.top - 20; // 20 = yüksekliğin yarısı
+    // 📏 AKILLI HESAPLAMA:
+    // window.innerHeight / 2 -> Ekranın tam ortası
+    // containerRect.top -> Resmin tepesinin ekrana olan uzaklığı
+    // Bu ikisini çıkarınca, o an baktığın yerin resim üzerindeki yerini buluruz.
+    
+    let relativeY = (window.innerHeight / 2) - containerRect.top;
+    let relativeX = (window.innerWidth / 2) - containerRect.left;
 
-    // Stilleri uygula
+    // Kutuyu konumlandır (75 ve 20 kutu boyutunun yarısıdır, tam merkeze oturtur)
     div.style.position = 'absolute';
-    div.style.left = centerX + 'px';
-    div.style.top = centerY + 'px';
+    div.style.left = (relativeX - 75) + 'px'; 
+    div.style.top = (relativeY - 20) + 'px'; 
+    
+    // Görünürlük ayarları
     div.style.width = '150px';
     div.style.minHeight = '40px';
-    div.style.padding = '5px';
-    div.style.color = 'black';
     div.style.backgroundColor = 'white';
-    div.style.border = '2px solid #007bff'; // Modern mavi çerçeve
-    div.style.borderRadius = '5px';
+    div.style.color = 'black';
+    div.style.border = '2px solid #007bff';
     div.style.zIndex = '1000';
+    div.style.padding = '5px';
     div.style.textAlign = 'center';
     div.style.display = 'flex';
     div.style.alignItems = 'center';
@@ -153,5 +157,6 @@ function addText() {
     setupDraggable(div);
     container.appendChild(div);
 }
+
 
 
