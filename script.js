@@ -151,3 +151,33 @@ function addText() {
     setupDraggable(div);
     container.appendChild(div);
 }
+
+function exportJSON() {
+    let overlays = document.querySelectorAll('.text-overlay');
+    if (overlays.length === 0) { alert("Önce metin eklemelisin!"); return; }
+
+    let currentFileName = images[currentIndex].name; // RESİM ADINI ALDIK
+    let data = {
+        imageName: currentFileName, // Hangi resim olduğu artık içinde yazıyor!
+        pageNumber: currentIndex + 1,
+        translations: []
+    };
+
+    overlays.forEach(el => {
+        let x = (parseFloat(el.style.left) / mangaPage.clientWidth) * 100;
+        let y = (parseFloat(el.style.top) / mangaPage.clientHeight) * 100;
+        data.translations.push({
+            text: el.innerText,
+            x: x.toFixed(2) + "%",
+            y: y.toFixed(2) + "%"
+        });
+    });
+
+    let jsonContent = JSON.stringify(data, null, 2);
+    let blob = new Blob([jsonContent], { type: "application/json" });
+    let url = URL.createObjectURL(blob);
+    let link = document.createElement("a");
+    link.download = `${currentFileName.split('.')[0]}_data.json`;
+    link.href = url;
+    link.click();
+}
