@@ -120,31 +120,38 @@ function setupDraggable(div) {
 }
 
 function addText() {
-    console.log("Metin ekleme tetiklendi..."); // Konsolda takip etmek için
-    
     let div = document.createElement('div');
     div.className = 'text-overlay';
     div.contentEditable = true;
     div.innerText = 'New Text';
     
-    // Stilleri doğrudan JS ile veriyoruz ki CSS'te hata olsa bile görünsün
+    // 📏 EKRAN HESAPLAMA (Kutuyu o an baktığın yere koyar)
+    const container = document.getElementById('canvas-container');
+    const containerRect = container.getBoundingClientRect();
+    
+    // Ekranın orta noktasını bulup container'a göre oranlıyoruz
+    let centerX = (window.innerWidth / 2) - containerRect.left - 75; // 75 = genişliğin yarısı
+    let centerY = (window.innerHeight / 2) - containerRect.top - 20; // 20 = yüksekliğin yarısı
+
+    // Stilleri uygula
     div.style.position = 'absolute';
-    div.style.left = '100px';
-    div.style.top = '100px';
+    div.style.left = centerX + 'px';
+    div.style.top = centerY + 'px';
     div.style.width = '150px';
     div.style.minHeight = '40px';
-    div.style.padding = '10px';
+    div.style.padding = '5px';
     div.style.color = 'black';
-    div.style.backgroundColor = 'white'; // Beyaz arka plan (Görünmesi için)
-    div.style.border = '2px solid blue'; // Mavi çerçeve
-    div.style.zIndex = '1000'; // Resmin üstünde kalması için
-    div.style.cursor = 'move';
-    div.style.display = 'block';
+    div.style.backgroundColor = 'white';
+    div.style.border = '2px solid #007bff'; // Modern mavi çerçeve
+    div.style.borderRadius = '5px';
+    div.style.zIndex = '1000';
+    div.style.textAlign = 'center';
+    div.style.display = 'flex';
+    div.style.alignItems = 'center';
+    div.style.justifyContent = 'center';
 
     setupDraggable(div);
-    
-    // Canvas'a ekliyoruz
-    const container = document.getElementById('canvas-container');
     container.appendChild(div);
 }
+
 
