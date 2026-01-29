@@ -123,40 +123,39 @@ function addText() {
     let div = document.createElement('div');
     div.className = 'text-overlay';
     div.contentEditable = true;
-    div.innerText = 'New Text';
-    
-    const container = document.getElementById('canvas-container');
-    
-    // 🎯 EKRANIN TAM ORTASI (GÖZ HİZASI) HESABI
-    // Sayfayı ne kadar aşağı kaydırdıysan (window.pageYOffset)
-    // Üzerine ekran yüksekliğinin yarısını ekle (window.innerHeight / 2)
-    // Sonra resmin başladığı yeri çıkar (container.offsetTop)
-    
-    let scrollMiktari = window.pageYOffset || document.documentElement.scrollTop;
-    let ekranYuksekligi = window.innerHeight;
-    let resimBaslangici = container.offsetTop;
+    div.innerText = 'Yazı Yazın';
 
-    let tamOrtaY = (scrollMiktari + (ekranYuksekligi / 2)) - resimBaslangici;
-    let tamOrtaX = (window.innerWidth / 2) - container.getBoundingClientRect().left;
+    let rect = canvas.getBoundingClientRect();
+    // Ekranın ortasını, sayfa kaydırmasını (scroll) hesaba katarak bul
+    let spawnX = (window.innerWidth / 2) - rect.left;
+    let spawnY = (window.innerHeight / 2) - rect.top;
 
-    // Stilleri uygula
-    div.style.position = 'absolute';
-    div.style.left = (tamOrtaX - 75) + 'px'; // Genişliğin yarısı kadar sola kaydır (tam merkezleme)
-    div.style.top = (tamOrtaY - 20) + 'px';  // Yüksekliğin yarısı kadar yukarı kaydır
-    
-    // Görünürlük Ayarları
-    div.style.width = '150px';
-    div.style.minHeight = '40px';
-    div.style.backgroundColor = 'white';
-    div.style.color = 'black';
-    div.style.border = '2px solid #007bff';
-    div.style.zIndex = '10000'; // Her şeyin en üstünde
-    div.style.padding = '5px';
-    div.style.textAlign = 'center';
-    div.style.display = 'flex';
-    div.style.alignItems = 'center';
-    div.style.justifyContent = 'center';
+    div.style.left = spawnX + 'px';
+    div.style.top = spawnY + 'px';
 
-    setupDraggable(div);
-    container.appendChild(div);
+    // Yeni ve sağlam sürükleme mantığı
+    div.onmousedown = function(e) {
+        // Tıklanan noktanın kutu içindeki farkını al
+        let shiftX = e.clientX - div.getBoundingClientRect().left;
+        let shiftY = e.clientY - div.getBoundingClientRect().top;
+
+        function moveAt(clientX, clientY) {
+            let canvasRect = canvas.getBoundingClientRect();
+            let newX = clientX - canvasRect.left - shiftX;
+            let newY = clientY - canvasRect.top - shiftY;
+            div.style.left = newX + 'px';
+            div.style.top = newY + 'px';
+        }
+
+        function onMouseMove(e) { moveAt(e.clientX, e.clientY); }
+        document.addEventListener('mousemove', onMouseMove);
+
+        document.onmouseup = function() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.onmouseup = null;
+        };
+    };
+
+    div.ondragstart = function() { return false; }; // Tarayıcının kendi sürüklemesini engelle
+    canvas.appendChild(div);
 }
