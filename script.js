@@ -5,7 +5,7 @@ let pageInfo = document.getElementById('pageInfo');
 
 let images = [];
 let currentIndex = 0;
-// Yeni API Anahtarın güncellendi
+// GÜNCEL API ANAHTARIN
 const TORI_API_KEY = "sk_torii_oBDbX2U7t4kIU-ol7ZgSZfxRNuoqUokCc87fNS1qoTo"; 
 
 imageLoader.addEventListener('change', function(e) {
@@ -30,45 +30,55 @@ function loadPage(index) {
 function nextPage() { if (currentIndex < images.length - 1) { currentIndex++; loadPage(currentIndex); } }
 function prevPage() { if (currentIndex > 0) { currentIndex--; loadPage(currentIndex); } }
 
-// 🚀 TORI AI İLE TARAMA FONKSİYONU (V2 - İngilizce Ayarlı)
+// 🚀 GÜNCELLENMİŞ TORI V2 FONKSİYONU
 async function runOCR() {
-    if (!mangaPage.src) { alert("Önce resim yükle!"); return; }
+    if (!mangaPage.src) { alert("Please upload an image first!"); return; }
     
-    pageInfo.innerText = "🧠 Tori AI Analiz Ediyor...";
-
-    const response = await fetch(mangaPage.src);
-    const imageBlob = await response.blob();
-    
-    const formData = new FormData();
-    formData.append('file', imageBlob, 'image.png');
-
-    // Dokümantasyondaki gibi V2 Translate Endpoint'ini kullanıyoruz
-    const headers = new Headers();
-    headers.append('Authorization', `Bearer ${TORI_API_KEY}`);
-    headers.append('target_lang', 'en'); // İngilizce çıktı
-    headers.append('translator', 'gemini-2.5-flash');
-    headers.append('font', 'wildwords');
+    pageInfo.innerText = "🌀 Connecting to Tori AI...";
 
     try {
-        const apiResponse = await fetch('https://api.toriitranslate.com/api/v2/upload', {
+        const response = await fetch(mangaPage.src);
+        const imageBlob = await response.blob();
+        
+        const formData = new FormData();
+        formData.append('file', imageBlob, 'image.png');
+
+        // URL'yi dokümantasyondaki V2 adresine güncelledik
+        const apiURL = 'https://api.toriitranslate.com/api/v2/upload';
+
+        const apiResponse = await fetch(apiURL, {
             method: 'POST',
-            headers: headers,
+            headers: {
+                'Authorization': `Bearer ${TORI_API_KEY}`,
+                'target_lang': 'en',
+                'translator': 'gemini-2.5-flash',
+                'font': 'wildwords'
+            },
             body: formData
         });
 
+        // Hata durumunu kontrol et
+        if (!apiResponse.ok) {
+            const errorText = await apiResponse.text();
+            throw new Error(`API Error: ${apiResponse.status} - ${errorText}`);
+        }
+
         const result = await apiResponse.json();
         
-        if (result.text) {
+        if (result.text && result.text.length > 0) {
             result.text.forEach(obj => {
-                createToriOverlay(obj.text, [obj.x - obj.width/2, obj.y - obj.height/2, obj.x + obj.width/2, obj.y + obj.height/2]);
+                // Koordinat hesaplama (Merkezden köşeye)
+                const x_min = obj.x - (obj.width / 2);
+                const y_min = obj.y - (obj.height / 2);
+                createToriOverlay(obj.text, [x_min, y_min, x_min + obj.width, y_min + obj.height]);
             });
-            alert("Tori AI taramayı başarıyla bitirdi!");
+            alert("Success!");
         } else {
-            alert("Sonuç alınamadı. Anahtarını veya kredini kontrol et.");
+            alert("No text detected. Check your credits on Tori dashboard.");
         }
     } catch (error) {
-        console.error("Tori Hatası:", error);
-        alert("Bağlantı hatası.");
+        console.error("Connection Error:", error);
+        alert("Bağlantı Hatası: " + error.message);
     } finally {
         pageInfo.innerText = `${currentIndex + 1} / ${images.length}`;
     }
@@ -93,71 +103,32 @@ function createToriOverlay(text, box) {
     canvas.appendChild(div);
 }
 
-// 🛠️ DÜZELTİLMİŞ SÜRÜKLEME VE SİLME
 function setupDraggable(div) {
     div.onmousedown = function(e) {
         if (e.ctrlKey) { div.remove(); return; }
-        
         let shiftX = e.clientX - div.getBoundingClientRect().left;
         let shiftY = e.clientY - div.getBoundingClientRect().top;
-
         function moveAt(clientX, clientY) {
             let canvasRect = canvas.getBoundingClientRect();
-            let newX = clientX - canvasRect.left - shiftX;
-            let newY = clientY - canvasRect.top - shiftY;
-            div.style.left = newX + 'px';
-            div.style.top = newY + 'px';
+            div.style.left = (clientX - canvasRect.left - shiftX) + 'px';
+            div.style.top = (clientY - canvasRect.top - shiftY) + 'px';
         }
-
-        function onMouseMove(e) { moveAt(e.clientX, e.clientY); }
-
-        document.addEventListener('mousemove', onMouseMove);
-        document.onmouseup = function() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.onmouseup = null;
-        };
+        document.onmousemove = (e) => moveAt(e.clientX, e.clientY);
+        document.onmouseup = () => { document.onmousemove = null; };
     };
     div.ondragstart = () => false;
 }
 
-// 🛠️ DÜZELTİLMİŞ METİN EKLEME
 function addText() {
     let div = document.createElement('div');
     div.className = 'text-overlay';
     div.contentEditable = true;
     div.innerText = 'New Text';
-    
-    // Görünür olması için varsayılan boyutlar ekledik
     div.style.left = '50px';
     div.style.top = '50px';
-    div.style.width = '150px';
-    div.style.minHeight = '40px';
-    div.style.padding = '5px';
-    div.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
-    div.style.border = '1px dashed #000';
-
+    div.style.width = '100px';
+    div.style.minHeight = '30px';
+    div.style.border = '1px dashed red'; // Görünmesi için kırmızı çerçeve
     setupDraggable(div);
     canvas.appendChild(div);
-}
-
-function exportJSON() {
-    let overlays = document.querySelectorAll('.text-overlay');
-    let data = { 
-        imageName: images[currentIndex].name, 
-        originalWidth: mangaPage.naturalWidth,
-        translations: [] 
-    };
-    overlays.forEach(el => {
-        data.translations.push({ 
-            text: el.innerText, 
-            x: el.style.left, 
-            y: el.style.top,
-            w: el.style.width
-        });
-    });
-    let blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    let link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `translated_${currentIndex + 1}.json`;
-    link.click();
 }
