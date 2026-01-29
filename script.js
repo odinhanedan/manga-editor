@@ -123,39 +123,35 @@ function addText() {
     let div = document.createElement('div');
     div.className = 'text-overlay';
     div.contentEditable = true;
-    div.innerText = 'Yazı Yazın';
+    div.innerText = 'New Text';
+    
+    const container = document.getElementById('canvas-container');
 
-    let rect = canvas.getBoundingClientRect();
-    // Ekranın ortasını, sayfa kaydırmasını (scroll) hesaba katarak bul
-    let spawnX = (window.innerWidth / 2) - rect.left;
-    let spawnY = (window.innerHeight / 2) - rect.top;
+    // 1. Kutuyu önce "Görünür Ekranın" (Viewport) tam ortasına yerleştiriyoruz
+    // Resmin neresinde olduğun hiç önemli değil, o an baktığın camın ortası.
+    let screenX = window.innerWidth / 2;
+    let screenY = window.innerHeight / 2;
 
-    div.style.left = spawnX + 'px';
-    div.style.top = spawnY + 'px';
+    // 2. Bu noktanın "Resim (Container)" üzerindeki karşılığını buluyoruz
+    let rect = container.getBoundingClientRect();
+    let finalX = screenX - rect.left - 75; // 75 kutu genişlik yarısı
+    let finalY = screenY - rect.top - 20;  // 20 kutu yükseklik yarısı
 
-    // Yeni ve sağlam sürükleme mantığı
-    div.onmousedown = function(e) {
-        // Tıklanan noktanın kutu içindeki farkını al
-        let shiftX = e.clientX - div.getBoundingClientRect().left;
-        let shiftY = e.clientY - div.getBoundingClientRect().top;
+    // 3. Stilleri basıyoruz
+    div.style.position = 'absolute';
+    div.style.left = finalX + 'px';
+    div.style.top = finalY + 'px';
+    div.style.width = '150px';
+    div.style.minHeight = '40px';
+    div.style.backgroundColor = 'white';
+    div.style.color = 'black';
+    div.style.border = '2px solid #007bff';
+    div.style.zIndex = '9999';
+    div.style.textAlign = 'center';
+    div.style.display = 'flex';
+    div.style.alignItems = 'center';
+    div.style.justifyContent = 'center';
 
-        function moveAt(clientX, clientY) {
-            let canvasRect = canvas.getBoundingClientRect();
-            let newX = clientX - canvasRect.left - shiftX;
-            let newY = clientY - canvasRect.top - shiftY;
-            div.style.left = newX + 'px';
-            div.style.top = newY + 'px';
-        }
-
-        function onMouseMove(e) { moveAt(e.clientX, e.clientY); }
-        document.addEventListener('mousemove', onMouseMove);
-
-        document.onmouseup = function() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.onmouseup = null;
-        };
-    };
-
-    div.ondragstart = function() { return false; }; // Tarayıcının kendi sürüklemesini engelle
-    canvas.appendChild(div);
+    setupDraggable(div);
+    container.appendChild(div);
 }
