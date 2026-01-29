@@ -120,15 +120,31 @@ function setupDraggable(div) {
 }
 
 function addText() {
+    console.log("Metin ekleme tetiklendi..."); // Konsolda takip etmek için
+    
     let div = document.createElement('div');
     div.className = 'text-overlay';
     div.contentEditable = true;
     div.innerText = 'New Text';
-    div.style.left = '50px';
-    div.style.top = '50px';
-    div.style.width = '100px';
-    div.style.minHeight = '30px';
-    div.style.border = '1px dashed red'; // Görünmesi için kırmızı çerçeve
+    
+    // Stilleri doğrudan JS ile veriyoruz ki CSS'te hata olsa bile görünsün
+    div.style.position = 'absolute';
+    div.style.left = '100px';
+    div.style.top = '100px';
+    div.style.width = '150px';
+    div.style.minHeight = '40px';
+    div.style.padding = '10px';
+    div.style.color = 'black';
+    div.style.backgroundColor = 'white'; // Beyaz arka plan (Görünmesi için)
+    div.style.border = '2px solid blue'; // Mavi çerçeve
+    div.style.zIndex = '1000'; // Resmin üstünde kalması için
+    div.style.cursor = 'move';
+    div.style.display = 'block';
+
     setupDraggable(div);
-    canvas.appendChild(div);
+    
+    // Canvas'a ekliyoruz
+    const container = document.getElementById('canvas-container');
+    container.appendChild(div);
 }
+
