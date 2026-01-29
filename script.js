@@ -154,30 +154,38 @@ function addText() {
 
 function exportJSON() {
     let overlays = document.querySelectorAll('.text-overlay');
-    if (overlays.length === 0) { alert("Önce metin eklemelisin!"); return; }
+    
+    // Eğer hiç metin yoksa uyarı ver
+    if (overlays.length === 0) {
+        alert("Dışa aktarılacak metin bulunamadı!");
+        return;
+    }
 
-    let currentFileName = images[currentIndex].name; // RESİM ADINI ALDIK
-    let data = {
-        imageName: currentFileName, // Hangi resim olduğu artık içinde yazıyor!
+    let data = { 
+        imageName: images[currentIndex] ? images[currentIndex].name : "manga_page", 
         pageNumber: currentIndex + 1,
-        translations: []
+        translations: [] 
     };
 
     overlays.forEach(el => {
-        let x = (parseFloat(el.style.left) / mangaPage.clientWidth) * 100;
-        let y = (parseFloat(el.style.top) / mangaPage.clientHeight) * 100;
-        data.translations.push({
-            text: el.innerText,
-            x: x.toFixed(2) + "%",
-            y: y.toFixed(2) + "%"
+        data.translations.push({ 
+            text: el.innerText, 
+            x: el.style.left, 
+            y: el.style.top,
+            width: el.style.width || el.offsetWidth + "px"
         });
     });
 
-    let jsonContent = JSON.stringify(data, null, 2);
-    let blob = new Blob([jsonContent], { type: "application/json" });
-    let url = URL.createObjectURL(blob);
+    // JSON dosyasını oluştur ve indir
+    let blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     let link = document.createElement("a");
-    link.download = `${currentFileName.split('.')[0]}_data.json`;
-    link.href = url;
+    link.href = URL.createObjectURL(blob);
+    link.download = `cevirisayfa_${currentIndex + 1}.json`;
+    
+    // Tarayıcı tetikleme
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link); // Temizlik
+    
+    console.log("JSON Çıktısı Başarılı:", data);
 }
