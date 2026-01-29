@@ -119,70 +119,44 @@ function setupDraggable(div) {
     div.ondragstart = () => false;
 }
 
-// Manuel Metin Ekleme Fonksiyonu
 function addText() {
-    // 1. Kutuyu oluşturuyoruz
     let div = document.createElement('div');
     div.className = 'text-overlay';
     div.contentEditable = true;
     div.innerText = 'New Text';
     
-    // 2. Kutu stillerini veriyoruz (Görünür ve şık olması için)
+    const container = document.getElementById('canvas-container');
+    
+    // 🎯 EKRANIN TAM ORTASI (GÖZ HİZASI) HESABI
+    // Sayfayı ne kadar aşağı kaydırdıysan (window.pageYOffset)
+    // Üzerine ekran yüksekliğinin yarısını ekle (window.innerHeight / 2)
+    // Sonra resmin başladığı yeri çıkar (container.offsetTop)
+    
+    let scrollMiktari = window.pageYOffset || document.documentElement.scrollTop;
+    let ekranYuksekligi = window.innerHeight;
+    let resimBaslangici = container.offsetTop;
+
+    let tamOrtaY = (scrollMiktari + (ekranYuksekligi / 2)) - resimBaslangici;
+    let tamOrtaX = (window.innerWidth / 2) - container.getBoundingClientRect().left;
+
+    // Stilleri uygula
     div.style.position = 'absolute';
+    div.style.left = (tamOrtaX - 75) + 'px'; // Genişliğin yarısı kadar sola kaydır (tam merkezleme)
+    div.style.top = (tamOrtaY - 20) + 'px';  // Yüksekliğin yarısı kadar yukarı kaydır
+    
+    // Görünürlük Ayarları
     div.style.width = '150px';
     div.style.minHeight = '40px';
     div.style.backgroundColor = 'white';
     div.style.color = 'black';
-    div.style.border = '2px solid #007bff'; // Belirgin mavi çerçeve
+    div.style.border = '2px solid #007bff';
+    div.style.zIndex = '10000'; // Her şeyin en üstünde
     div.style.padding = '5px';
-    div.style.zIndex = '9999'; // Her şeyin üstünde olsun
     div.style.textAlign = 'center';
     div.style.display = 'flex';
     div.style.alignItems = 'center';
     div.style.justifyContent = 'center';
-    div.style.cursor = 'move';
 
-    // 3. 🎯 TAM ORTAYI HESAPLAMA MANTIĞI
-    const container = document.getElementById('canvas-container');
-    const rect = container.getBoundingClientRect();
-
-    // Yatay orta: Ekran genişliğinin yarısı - Container'ın soldan uzaklığı - Kutunun yarısı
-    let centerX = (window.innerWidth / 2) - rect.left - 75;
-
-    // Dikey orta: Ekran yüksekliğinin yarısı - Container'ın tepeden uzaklığı - Kutunun yarısı
-    // (rect.top o anki bakış açına göre değiştiği için tam sonucu verir)
-    let centerY = (window.innerHeight / 2) - rect.top - 20;
-
-    div.style.left = centerX + 'px';
-    div.style.top = centerY + 'px';
-
-    // 4. Sürükleme özelliğini bağla ve sayfaya ekle
     setupDraggable(div);
     container.appendChild(div);
-}
-
-// Sürükleme Fonksiyonu (Daha pürüzsüz hali)
-function setupDraggable(div) {
-    div.onmousedown = function(e) {
-        if (e.ctrlKey) { div.remove(); return; }
-        
-        let shiftX = e.clientX - div.getBoundingClientRect().left;
-        let shiftY = e.clientY - div.getBoundingClientRect().top;
-
-        function moveAt(clientX, clientY) {
-            let containerRect = document.getElementById('canvas-container').getBoundingClientRect();
-            div.style.left = (clientX - containerRect.left - shiftX) + 'px';
-            div.style.top = (clientY - containerRect.top - shiftY) + 'px';
-        }
-
-        function onMouseMove(e) { moveAt(e.clientX, e.clientY); }
-
-        document.addEventListener('mousemove', onMouseMove);
-
-        document.onmouseup = function() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.onmouseup = null;
-        };
-    };
-    div.ondragstart = function() { return false; };
 }
