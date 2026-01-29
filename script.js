@@ -128,22 +128,21 @@ function addText() {
     const container = document.getElementById('canvas-container');
     const rect = container.getBoundingClientRect();
 
-    // 🎯 HİLE BURADA: 
-    // window.innerHeight / 2 -> Ekran yüksekliğinin tam ortası.
-    // rect.top -> Konteynırın ekranın üstüne olan uzaklığı.
-    // Bu ikisini birbirinden çıkarınca, resmin o an baktığın kısmındaki Y koordinatını buluruz.
-    
+    // 🎯 EKRANIN TAM ORTASI HESABI
     let finalX = (window.innerWidth / 2) - rect.left - 75; 
     let finalY = (window.innerHeight / 2) - rect.top - 20;
 
     div.style.left = finalX + 'px';
     div.style.top = finalY + 'px';
     
-    // Görünürlük için ekstra stiller (Senin CSS'ine ek olarak)
+    // ✨ ŞEFFAFLIK AYARLARI
+    div.style.backgroundColor = 'transparent'; // Beyaz kareyi kaldırdık
+    div.style.border = '1px dashed #ccc';      // Yerini görmen için çok ince kesikli çizgi
+    div.style.boxShadow = 'none';               // Varsa gölgeyi kaldırır
+    
+    // Yazı ayarları (CSS'indekileri destekler)
     div.style.width = '150px';
     div.style.minHeight = '40px';
-    div.style.backgroundColor = 'white';
-    div.style.border = '2px solid #007bff';
     div.style.zIndex = '9999';
     div.style.display = 'flex';
     div.style.alignItems = 'center';
