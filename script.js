@@ -126,27 +126,31 @@ function addText() {
     div.innerText = 'New Text';
     
     const container = document.getElementById('canvas-container');
-    const containerRect = container.getBoundingClientRect();
     
-    // 📏 AKILLI HESAPLAMA:
-    // window.innerHeight / 2 -> Ekranın tam ortası
-    // containerRect.top -> Resmin tepesinin ekrana olan uzaklığı
-    // Bu ikisini çıkarınca, o an baktığın yerin resim üzerindeki yerini buluruz.
+    // 📏 EKRANIN GÖRÜNEN ORTA NOKTASINI HESAPLA
+    // window.scrollY: Sayfayı ne kadar aşağı kaydırdığın
+    // window.innerHeight / 2: Ekran yüksekliğinin yarısı
+    // container.offsetTop: Resmin sayfanın en başından uzaklığı
     
-    let relativeY = (window.innerHeight / 2) - containerRect.top;
-    let relativeX = (window.innerWidth / 2) - containerRect.left;
+    let currentScroll = window.scrollY;
+    let viewportHeight = window.innerHeight;
+    let containerTop = container.offsetTop;
 
-    // Kutuyu konumlandır (75 ve 20 kutu boyutunun yarısıdır, tam merkeze oturtur)
+    // Matematik: (O anki kaydırma + Ekran yarısı) - Resmin başladığı yer
+    let exactCenterY = (currentScroll + (viewportHeight / 2)) - containerTop;
+    let exactCenterX = (window.innerWidth / 2) - container.getBoundingClientRect().left;
+
+    // Stiller
     div.style.position = 'absolute';
-    div.style.left = (relativeX - 75) + 'px'; 
-    div.style.top = (relativeY - 20) + 'px'; 
+    div.style.left = (exactCenterX - 75) + 'px'; // 75 kutu genişliğinin yarısı
+    div.style.top = (exactCenterY - 20) + 'px';  // 20 kutu yüksekliğinin yarısı
     
-    // Görünürlük ayarları
+    // Görünürlük için olmazsa olmazlar
     div.style.width = '150px';
     div.style.minHeight = '40px';
     div.style.backgroundColor = 'white';
     div.style.color = 'black';
-    div.style.border = '2px solid #007bff';
+    div.style.border = '2px solid #ff0000'; // Kırmızı yapalım ki hemen fark et
     div.style.zIndex = '1000';
     div.style.padding = '5px';
     div.style.textAlign = 'center';
