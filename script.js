@@ -218,3 +218,37 @@ function downloadJPG() {
     link.download = "manga_page.jpg";
     link.click();
 }
+
+// ======================
+// JSON EXPORT
+// ======================
+function exportJSON() {
+
+    let overlays = document.querySelectorAll(".text-overlay");
+    let cRect = canvas.getBoundingClientRect();
+
+    let data = {
+        translations: []
+    };
+
+    overlays.forEach(el => {
+
+        data.translations.push({
+            text: el.innerText,
+            x: ((parseFloat(el.style.left) / cRect.width) * 100).toFixed(2) + "%",
+            y: ((parseFloat(el.style.top) / cRect.height) * 100).toFixed(2) + "%",
+            width: ((parseFloat(el.style.width) / cRect.width) * 100).toFixed(2) + "%"
+        });
+
+    });
+
+    const blob = new Blob(
+        [JSON.stringify(data, null, 2)],
+        { type: "application/json" }
+    );
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "madara_export.json";
+    link.click();
+}
