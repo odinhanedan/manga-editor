@@ -95,16 +95,17 @@ async function runOCR() {
 
         // ÇEVRİLMİŞ METİNLERİ EKLE
         if (result.text) {
-            result.text.forEach(obj => {
-                createOverlayScaled(
-                    obj.text,
-                    obj.x,
-                    obj.y,
-                    obj.width,
-                    obj.height
-                );
-            });
-        }
+    result.text.forEach(obj => {
+        createOverlayScaled(
+            obj.originalText,   // BURAYI DEGISTIRDIK
+            obj.x,
+            obj.y,
+            obj.width,
+            obj.height
+        );
+    });
+}
+
 
         pageInfo.innerText = "Tamamlandi";
 
@@ -249,6 +250,7 @@ window.exportJSON = function () {
     link.download = "madara_export.json";
     link.click();
 };
+
 
 
 
