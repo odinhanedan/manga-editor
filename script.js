@@ -36,7 +36,7 @@ function prevPage() { if (currentIndex > 0) { currentIndex--; loadPage(currentIn
 
 async function runOCR() {
     if (!mangaPage.src) { alert("Önce resim yükleyin!"); return; }
-    pageInfo.innerText = "🌀 Tori AI Temizliyor ve Çeviriyor...";
+    pageInfo.innerText = "🌀 Tori AI Analiz Ediyor...";
     
     try {
         const response = await fetch(mangaPage.src);
@@ -44,31 +44,52 @@ async function runOCR() {
         const formData = new FormData();
         formData.append('file', imageBlob, 'image.png');
         
+        // Tori'ye istek atarken 'render_mode' ekliyoruz
         const apiResponse = await fetch('https://api.toriitranslate.com/api/v2/upload', {
             method: 'POST',
             headers: { 
                 'Authorization': `Bearer ${TORI_API_KEY}`,
-                'target_lang': 'tr' // Türkçeye çevirir
+                'target_lang': 'tr'
             },
             body: formData
         });
 
         const result = await apiResponse.json();
+        console.log("Tori'den gelen tam yanıt:", result); // Tarayıcı konsolunda (F12) ne geldiğini görelim
 
-        // 🎯 TEMİZ RESMİ AL VE ÜSTE KOY
-        if (result.inpainted_image) {
-            cleanPage.src = result.inpainted_image;
+        // 🎯 TEMİZ RESİM KONTROLÜ
+        // Bazı API yanıtlarında 'inpainted_image' yerine 'image' veya farklı bir isim gelebilir
+        let cleanImageData = result.inpainted_image || result.image_url || result.res_image;
+
+        if (cleanImageData) {
+            cleanPage.src = cleanImageData;
             cleanPage.style.display = 'block';
+            cleanPage.style.opacity = '1';
+            console.log("Temiz resim başarıyla yüklendi.");
+        } else {
+            console.warn("Tori metinleri gönderdi ama temizlenmiş resmi göndermedi.");
+            // Eğer resim gelmezse sadece metinleri gösterelim
+            cleanPage.style.display = 'none';
         }
 
         if (result.text) {
             result.text.forEach(obj => {
-                createToriOverlay(obj.text, [obj.x - obj.width/2, obj.y - obj.height/2, obj.x + obj.width/2, obj.y + obj.height/2]);
+                createToriOverlay(obj.text, [
+                    obj.x - obj.width/2, 
+                    obj.y - obj.height/2, 
+                    obj.x + obj.width/2, 
+                    obj.y + obj.height/2
+                ]);
             });
-            alert("İşlem Tamamlandı!");
+            alert("Metinler getirildi!");
         }
-    } catch (error) { alert("Bağlantı hatası veya API limiti!"); }
-    finally { pageInfo.innerText = `${currentIndex + 1} / ${images.length}`; }
+    } catch (error) { 
+        console.error("Hata detayı:", error);
+        alert("Bağlantı hatası! Konsolu kontrol edin."); 
+    }
+    finally { 
+        pageInfo.innerText = `${currentIndex + 1} / ${images.length}`; 
+    }
 }
 
 // 👁️ GÖZ BUTONU: TEMİZ RESMİ AÇ/KAPAT
@@ -174,3 +195,4 @@ function exportJSON() {
     link.download = `madara_cevirisayfa_${currentIndex + 1}.json`;
     link.click();
 }
+
