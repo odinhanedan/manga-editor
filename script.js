@@ -6,7 +6,7 @@ let pageInfo = document.getElementById('pageInfo');
 let images = [];
 let currentIndex = 0;
 
-const TORI_API_KEY = "BURAYA_KENDİ_API_KEYİNİ_YAZ";
+const TORI_API_KEY = "BURAYA_API_KEYİNİ_YAZ";
 
 document.getElementById('imageLoader').addEventListener('change', (e) => {
     images = Array.from(e.target.files);
@@ -27,62 +27,48 @@ function loadPage(index) {
 }
 
 async function runOCR() {
+
     if (!mangaPage.src) return alert("Resim yükle!");
 
     pageInfo.innerText = "🌀 Tori İşliyor...";
 
-    try {
-        const response = await fetch(mangaPage.src);
-        const blob = await response.blob();
+    const response = await fetch(mangaPage.src);
+    const blob = await response.blob();
 
-        const formData = new FormData();
-        formData.append("file", blob);
+    const formData = new FormData();
+    formData.append("file", blob);
 
-        const apiRes = await fetch(
-            "https://api.toriitranslate.com/api/v2/upload",
-            {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${TORI_API_KEY}`,
-                    "target_lang": "tr",
-                    "translator": "gemini-2.5-flash",
-                    "font": "wildwords",
-                    "text_align": "auto",
-                    "stroke_disabled": "false",
-                    "min_font_size": "12"
-                },
-                body: formData
-            }
-        );
-
-        const result = await apiRes.json();
-        console.log("Gelen Veri:", result);
-
-        // Temiz görsel
-        if (result.inpainted) {
-            cleanPage.src = result.inpainted;
-            cleanPage.style.display = "block";
-            cleanPage.style.opacity = "1";
+    const apiRes = await fetch(
+        "https://api.toriitranslate.com/api/v2/upload",
+        {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${TORI_API_KEY}`,
+                "target_lang": "tr",
+                "translator": "gemini-2.5-flash",
+                "font": "wildwords"
+            },
+            body: formData
         }
+    );
 
-        // Eski kutuları temizle
-        document.querySelectorAll('.text-overlay').forEach(el => el.remove());
+    const result = await apiRes.json();
+    console.log("Gelen Veri:", result);
 
-        // SADECE ÇEVRİLMİŞ METNİ KULLAN
-        if (result.text) {
-            result.text.forEach(obj => {
-                createOverlay(
-                    obj.text,
-                    obj.x,
-                    obj.y,
-                    obj.width,
-                    obj.height
-                );
-            });
-        }
+    // temiz görsel
+    if (result.inpainted) {
+        cleanPage.src = result.inpainted;
+        cleanPage.style.display = "block";
+    }
 
-    } catch (err) {
-        alert("API Hatası");
+    // eski overlay temizle
+    document.querySelectorAll('.text-overlay').forEach(el => el.remove());
+
+    // SADECE ÇEVİRİYİ KULLAN
+    if (result.text) {
+        result.text.forEach(obj => {
+            createOverlay(obj.text, obj.x, obj.y, obj.width, obj.height);
+        });
     }
 
     pageInfo.innerText = `${currentIndex + 1} / ${images.length}`;
@@ -107,27 +93,28 @@ function createOverlay(text, x, y, w, h) {
     canvas.appendChild(div);
 }
 
-window.addText = function () {
+/* ✅ SENİN ORİJİNAL ÇALIŞAN METİN EKLE */
+function addText() {
 
-    if (!mangaPage.complete) {
-        alert("Resim henüz tam yüklenmedi.");
-        return;
-    }
-
-    const rect = mangaPage.getBoundingClientRect();
-
-    let div = document.createElement("div");
-    div.className = "text-overlay";
+    let div = document.createElement('div');
+    div.className = 'text-overlay';
     div.contentEditable = true;
-    div.innerText = "Yeni Metin";
+    div.innerText = 'New Text';
 
-    div.style.left = (rect.width / 2 - 100) + "px";
-    div.style.top = (rect.height / 2 - 25) + "px";
-    div.style.width = "200px";
+    const rect = canvas.getBoundingClientRect();
+
+    let finalX = (window.innerWidth / 2) - rect.left - 75;
+    let finalY = (window.innerHeight / 2) - rect.top - 20;
+
+    div.style.left = finalX + 'px';
+    div.style.top = finalY + 'px';
+    div.style.width = '150px';
+    div.style.minHeight = '40px';
+    div.style.zIndex = '9999';
 
     setupDraggable(div);
     canvas.appendChild(div);
-};
+}
 
 function setupDraggable(div) {
 
@@ -154,8 +141,8 @@ function setupDraggable(div) {
 }
 
 function toggleCleanView() {
-    cleanPage.style.opacity =
-        cleanPage.style.opacity === "0" ? "1" : "0";
+    cleanPage.style.display =
+        cleanPage.style.display === "none" ? "block" : "none";
 }
 
 function exportJSON() {
@@ -166,7 +153,6 @@ function exportJSON() {
     let data = { translations: [] };
 
     overlays.forEach(el => {
-
         data.translations.push({
             text: el.innerText,
             x: ((parseFloat(el.style.left) / cRect.width) * 100).toFixed(2) + "%",
@@ -183,29 +169,16 @@ function exportJSON() {
 }
 
 function downloadJPG() {
-    let link = document.createElement("a");
-    link.href = cleanPage.src || mangaPage.src;
-    link.download = "page.jpg";
-    link.click();
-}
 
-
-window.downloadJPG = function () {
-
-    let source = cleanPage.style.display !== "none" && cleanPage.src
-        ? cleanPage.src
-        : mangaPage.src;
+    let source = cleanPage.src || mangaPage.src;
 
     if (!source) {
-        alert("İndirilecek görsel yok.");
+        alert("İndirilecek görsel yok");
         return;
     }
 
     let link = document.createElement("a");
     link.href = source;
     link.download = "manga_page.jpg";
-    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
-};
-
+}
