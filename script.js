@@ -6,7 +6,8 @@ let pageInfo = document.getElementById("pageInfo");
 let images = [];
 let currentIndex = 0;
 
-const TORI_API_KEY = "BURAYA_API_KEYINI_YAZ".trim();
+const TORI_API_KEY = "sk_torii_6DIEdOZ5FrET6NCTLktqqOuLcZER9NKeo2NNsOwDhME".trim();
+
 
 document.getElementById("imageLoader").addEventListener("change", function (e) {
     images = Array.from(e.target.files);
@@ -204,4 +205,5 @@ function exportJSON() {
     a.download = "madara.json";
     a.click();
 }
+
 
