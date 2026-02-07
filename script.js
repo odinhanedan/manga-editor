@@ -1,3 +1,11 @@
+// ======================
+// TORII API KEY
+// ======================
+const TORI_API_KEY = "sk_torii_6DIEdOZ5FrET6NCTLktqqOuLcZER9NKeo2NNsOwDhME".trim();
+
+// ======================
+// ELEMENTLER
+// ======================
 let mangaPage = document.getElementById("mangaPage");
 let cleanPage = document.getElementById("cleanPage");
 let canvas = document.getElementById("canvas-container");
@@ -6,9 +14,9 @@ let pageInfo = document.getElementById("pageInfo");
 let images = [];
 let currentIndex = 0;
 
-const TORI_API_KEY = "sk_torii_6DIEdOZ5FrET6NCTLktqqOuLcZER9NKeo2NNsOwDhME".trim();
-
-
+// ======================
+// RESIM YUKLEME
+// ======================
 document.getElementById("imageLoader").addEventListener("change", function (e) {
     images = Array.from(e.target.files);
     if (images.length > 0) loadPage(0);
@@ -32,9 +40,10 @@ function loadPage(index) {
     pageInfo.innerText = (index + 1) + " / " + images.length;
 }
 
+// ======================
+// TORII OCR + TRANSLATE
+// ======================
 async function runOCR() {
-
-    async function runOCR() {
 
     if (!mangaPage.src) {
         alert("Resim yukle");
@@ -65,16 +74,26 @@ async function runOCR() {
             }
         );
 
-        const result = await apiRes.json();
-        console.log(result);
+        if (!apiRes.ok) {
+            const text = await apiRes.text();
+            alert("API HATASI: " + text);
+            pageInfo.innerText = "Hata";
+            return;
+        }
 
+        const result = await apiRes.json();
+        console.log("Gelen Veri:", result);
+
+        // CLEAN IMAGE
         if (result.inpainted) {
             cleanPage.src = result.inpainted;
             cleanPage.style.display = "block";
         }
 
+        // eski yazıları temizle
         document.querySelectorAll(".text-overlay").forEach(el => el.remove());
 
+        // ÇEVRİLMİŞ METİNLERİ EKLE
         if (result.text) {
             result.text.forEach(obj => {
                 createOverlayScaled(
@@ -87,16 +106,18 @@ async function runOCR() {
             });
         }
 
+        pageInfo.innerText = "Tamamlandi";
+
     } catch (error) {
         console.error("HATA:", error);
-        alert("API hatasi");
+        alert("Baglanti hatasi");
+        pageInfo.innerText = "Hata";
     }
-
-    pageInfo.innerText = (currentIndex + 1) + " / " + images.length;
 }
 
-
-/* 🔥 TORI SCALELI OVERLAY */
+// ======================
+// TORII SCALE HESAPLI OVERLAY
+// ======================
 function createOverlayScaled(text, x, y, w, h) {
 
     let div = document.createElement("div");
@@ -108,37 +129,46 @@ function createOverlayScaled(text, x, y, w, h) {
     const scaleX = rect.width / mangaPage.naturalWidth;
     const scaleY = rect.height / mangaPage.naturalHeight;
 
+    div.style.position = "absolute";
     div.style.left = ((x - w / 2) * scaleX) + "px";
     div.style.top = ((y - h / 2) * scaleY) + "px";
     div.style.width = (w * scaleX) + "px";
+    div.style.minHeight = "30px";
+    div.style.zIndex = "1000";
 
     setupDraggable(div);
     canvas.appendChild(div);
 }
 
-/* 🔥 SENIN ILK CALISAN METIN EKLE SISTEMIN */
+// ======================
+// MANUEL METIN EKLE (CALISAN)
+// ======================
 function addText() {
 
-    let div = document.createElement('div');
-    div.className = 'text-overlay';
+    let div = document.createElement("div");
+    div.className = "text-overlay";
     div.contentEditable = true;
-    div.innerText = 'New Text';
+    div.innerText = "New Text";
 
     const rect = canvas.getBoundingClientRect();
 
     let finalX = (window.innerWidth / 2) - rect.left - 75;
     let finalY = (window.innerHeight / 2) - rect.top - 20;
 
-    div.style.left = finalX + 'px';
-    div.style.top = finalY + 'px';
-    div.style.width = '150px';
-    div.style.minHeight = '40px';
-    div.style.zIndex = '9999';
+    div.style.position = "absolute";
+    div.style.left = finalX + "px";
+    div.style.top = finalY + "px";
+    div.style.width = "150px";
+    div.style.minHeight = "40px";
+    div.style.zIndex = "9999";
 
     setupDraggable(div);
     canvas.appendChild(div);
 }
 
+// ======================
+// DRAG SISTEMI
+// ======================
 function setupDraggable(div) {
 
     div.onmousedown = function (e) {
@@ -163,11 +193,17 @@ function setupDraggable(div) {
     };
 }
 
+// ======================
+// CLEAN GORUNTU GOSTER/GIZLE
+// ======================
 function toggleCleanView() {
     cleanPage.style.display =
         cleanPage.style.display === "none" ? "block" : "none";
 }
 
+// ======================
+// JPG INDIR
+// ======================
 function downloadJPG() {
 
     let source = cleanPage.src || mangaPage.src;
@@ -182,28 +218,3 @@ function downloadJPG() {
     link.download = "manga_page.jpg";
     link.click();
 }
-
-function exportJSON() {
-
-    let overlays = document.querySelectorAll(".text-overlay");
-    let cRect = canvas.getBoundingClientRect();
-
-    let data = { translations: [] };
-
-    overlays.forEach(el => {
-        data.translations.push({
-            text: el.innerText,
-            x: ((parseFloat(el.style.left) / cRect.width) * 100).toFixed(2) + "%",
-            y: ((parseFloat(el.style.top) / cRect.height) * 100).toFixed(2) + "%",
-            width: ((parseFloat(el.style.width) / cRect.width) * 100).toFixed(2) + "%"
-        });
-    });
-
-    let blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    let a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "madara.json";
-    a.click();
-}
-
-
