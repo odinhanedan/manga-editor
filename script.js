@@ -6,9 +6,12 @@ let pageInfo = document.getElementById('pageInfo');
 
 let images = [];
 let currentIndex = 0;
-// YENİ API ANAHTARI
-const TORI_API_KEY = "sk_torii_6DIEdOZ5FrET6NCTLktqqOuLcZER9NKeo2NNsOwDhME"; 
 
+// GÜNCEL API ANAHTARIN VE URL
+const TORI_API_KEY = "sk_torii_6DIEdOZ5FrET6NCTLktqqOuLcZER9NKeo2NNsOwDhME";
+const TORI_URL = 'https://api.toriitranslate.com/api/v2/upload';
+
+// 1. Resimleri Yükleme ve Sayfalama
 imageLoader.addEventListener('change', function(e) {
     images = Array.from(e.target.files);
     if (images.length > 0) {
@@ -21,6 +24,7 @@ function loadPage(index) {
     document.querySelectorAll('.text-overlay').forEach(el => el.remove());
     cleanPage.style.display = 'none';
     cleanPage.src = "";
+    cleanPage.style.opacity = '1';
     
     let reader = new FileReader();
     reader.onload = function(event) {
@@ -34,65 +38,75 @@ function loadPage(index) {
 function nextPage() { if (currentIndex < images.length - 1) { currentIndex++; loadPage(currentIndex); } }
 function prevPage() { if (currentIndex > 0) { currentIndex--; loadPage(currentIndex); } }
 
+// 2. ANA AI İŞLEMİ (OCR + ÇEVİRİ + TEMİZLEME)
 async function runOCR() {
     if (!mangaPage.src) { alert("Önce resim yükleyin!"); return; }
     pageInfo.innerText = "🌀 Tori AI Analiz Ediyor...";
     
+    document.querySelectorAll('.text-overlay').forEach(el => el.remove());
+
     try {
         const response = await fetch(mangaPage.src);
         const imageBlob = await response.blob();
         const formData = new FormData();
         formData.append('file', imageBlob, 'image.png');
         
-        // Tori'ye istek atarken 'render_mode' ekliyoruz
-        const apiResponse = await fetch('https://api.toriitranslate.com/api/v2/upload', {
+        const apiResponse = await fetch(TORI_URL, {
             method: 'POST',
             headers: { 
                 'Authorization': `Bearer ${TORI_API_KEY}`,
-                'target_lang': 'tr'
+                'target_lang': 'tr' // Türkçeye çevirir
             },
             body: formData
         });
 
         const result = await apiResponse.json();
-        console.log("Tori'den gelen tam yanıt:", result); // Tarayıcı konsolunda (F12) ne geldiğini görelim
+        console.log("Tori'den Gelen Yanıt:", result);
 
-        // 🎯 TEMİZ RESİM KONTROLÜ
-        // Bazı API yanıtlarında 'inpainted_image' yerine 'image' veya farklı bir isim gelebilir
-        let cleanImageData = result.inpainted_image || result.image_url || result.res_image;
-
-        if (cleanImageData) {
-            cleanPage.src = cleanImageData;
+        // --- TEMİZ RESİM (INPAINTING) KATMANI ---
+        // Tori bazen 'inpainted_image' bazen 'res_image' olarak gönderir
+        let cleanUrl = result.inpainted_image || result.res_image;
+        if (cleanUrl) {
+            cleanPage.src = cleanUrl;
             cleanPage.style.display = 'block';
-            cleanPage.style.opacity = '1';
-            console.log("Temiz resim başarıyla yüklendi.");
-        } else {
-            console.warn("Tori metinleri gönderdi ama temizlenmiş resmi göndermedi.");
-            // Eğer resim gelmezse sadece metinleri gösterelim
-            cleanPage.style.display = 'none';
         }
 
-        if (result.text) {
-            result.text.forEach(obj => {
-                createToriOverlay(obj.text, [
-                    obj.x - obj.width/2, 
-                    obj.y - obj.height/2, 
-                    obj.x + obj.width/2, 
-                    obj.y + obj.height/2
-                ]);
+        // --- METİN VE BALON İŞLEME ---
+        // Tori dökümandaki gibi 'paragraphs' veya 'text' gönderebilir
+        const texts = result.text || result.paragraphs;
+
+        if (texts && Array.isArray(texts)) {
+            texts.forEach(obj => {
+                let x, y, w, h;
+
+                // Koordinat yapısını dökümana göre kontrol et
+                if (obj.boundingBox && Array.isArray(obj.boundingBox)) {
+                    // [x1, y1, x2, y2, x3, y3, x4, y4] formatı
+                    x = obj.boundingBox[0];
+                    y = obj.boundingBox[1];
+                    w = obj.boundingBox[2] - obj.boundingBox[0];
+                    h = obj.boundingBox[5] - obj.boundingBox[1];
+                } else {
+                    // {x, y, width, height} merkezi koordinat formatı
+                    x = obj.x - (obj.width / 2);
+                    y = obj.y - (obj.height / 2);
+                    w = obj.width;
+                    h = obj.height;
+                }
+
+                createToriOverlay(obj.text, [x, y, x + w, y + h]);
             });
-            alert("Metinler getirildi!");
+            alert("Tebrikler! Çeviri ve Temizleme Başarılı.");
         }
     } catch (error) { 
-        console.error("Hata detayı:", error);
-        alert("Bağlantı hatası! Konsolu kontrol edin."); 
-    }
-    finally { 
+        console.error("Sistemsel Hata:", error);
+        alert("Bağlantı kurulamadı, API anahtarını veya interneti kontrol et!"); 
+    } finally { 
         pageInfo.innerText = `${currentIndex + 1} / ${images.length}`; 
     }
 }
 
-// 👁️ GÖZ BUTONU: TEMİZ RESMİ AÇ/KAPAT
+// 3. Katman Geçişi (Göz Butonu)
 function toggleCleanView() {
     const btn = document.getElementById('toggleBtn');
     if (cleanPage.style.opacity === '0') {
@@ -104,15 +118,7 @@ function toggleCleanView() {
     }
 }
 
-// 📥 JPG OLARAK İNDİR
-function downloadJPG() {
-    if (!cleanPage.src) { alert("Önce AI ile tarama yapmalısın!"); return; }
-    const link = document.createElement('a');
-    link.href = cleanPage.src;
-    link.download = `temiz_${images[currentIndex].name.split('.')[0]}.jpg`;
-    link.click();
-}
-
+// 4. Balon Oluşturma
 function createToriOverlay(text, box) {
     let div = document.createElement('div');
     div.className = 'text-overlay';
@@ -126,12 +132,13 @@ function createToriOverlay(text, box) {
     div.style.left = (box[0] * scaleX) + 'px';
     div.style.top = (box[1] * scaleY) + 'px';
     div.style.width = ((box[2] - box[0]) * scaleX) + 'px';
-    div.style.zIndex = "10"; // Metinler temiz resmin üstünde kalmalı
+    div.style.zIndex = "10";
     
     setupDraggable(div);
     canvas.appendChild(div);
 }
 
+// 5. Sürükle Bırak
 function setupDraggable(div) {
     div.onmousedown = function(e) {
         if (e.ctrlKey) { div.remove(); return; }
@@ -144,26 +151,37 @@ function setupDraggable(div) {
         }
         function onMouseMove(e) { moveAt(e.clientX, e.clientY); }
         document.addEventListener('mousemove', onMouseMove);
-        document.onmouseup = function() { document.removeEventListener('mousemove', onMouseMove); document.onmouseup = null; };
+        document.onmouseup = function() { 
+            document.removeEventListener('mousemove', onMouseMove); 
+            document.onmouseup = null; 
+        };
     };
     div.ondragstart = () => false;
 }
 
+// 6. JPG İndirme
+function downloadJPG() {
+    if (!cleanPage.src) { alert("Önce temizlenmiş resmi almalısın!"); return; }
+    const link = document.createElement('a');
+    link.href = cleanPage.src;
+    link.download = `temiz_${images[currentIndex].name.split('.')[0]}.jpg`;
+    link.click();
+}
+
+// 7. Manuel Metin Ekleme
 function addText() {
     let div = document.createElement('div');
     div.className = 'text-overlay';
     div.contentEditable = true;
-    div.innerText = 'Yeni Metin';
+    div.innerText = 'Metin...';
     div.style.left = '50%';
     div.style.top = '50%';
-    div.style.backgroundColor = 'transparent';
-    div.style.border = '1px dashed #007bff';
     div.style.zIndex = "10";
     setupDraggable(div);
     canvas.appendChild(div);
 }
 
-// 🎯 JSON ÇIKTISI - MADARA UYUMLU % HESAPLAMA
+// 8. JSON ÇIKTISI (MADARA UYUMLU %)
 function exportJSON() {
     let overlays = document.querySelectorAll('.text-overlay');
     const containerRect = canvas.getBoundingClientRect();
@@ -174,11 +192,9 @@ function exportJSON() {
     };
 
     overlays.forEach(el => {
-        // Piksel değerlerini sayıya çevir
         let pxX = parseFloat(el.style.left);
         let pxY = parseFloat(el.style.top);
 
-        // Yüzde hesapla (%)
         let percentX = (pxX / containerRect.width) * 100;
         let percentY = (pxY / containerRect.height) * 100;
 
@@ -192,7 +208,6 @@ function exportJSON() {
     let blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     let link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `madara_cevirisayfa_${currentIndex + 1}.json`;
+    link.download = `cevirisayfa_${currentIndex + 1}.json`;
     link.click();
 }
-
