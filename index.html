@@ -2,18 +2,20 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Manga Editor</title>
+    <title>Manga Editor Pro</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body>
     <div class="toolbar">
         <input type="file" id="imageLoader" accept="image/*" multiple>
-
-        <button onclick="runOCR()">AI ile Tara</button>
-        <button onclick="prevPage()">⬅️ Geri</button>
+        <button onclick="runOCR()" style="background:#007bff; color:white;">AI ile Tara</button>
+        <button onclick="toggleCleanView()" id="toggleBtn">👁️ Orijinali Gör</button>
+        <button onclick="downloadJPG()" style="background:#ff9800; color:white;">📥 Temiz JPG İndir</button>
+        
+        <button onclick="prevPage()">⬅️</button>
         <span id="pageInfo">0 / 0</span>
-        <button onclick="nextPage()">İleri ➡️</button>
+        <button onclick="nextPage()">➡️</button>
 
         <button onclick="addText()" style="margin-left:20px;">+ Metin Ekle</button>
         <button onclick="exportJSON()" style="background:green; color:white;">JSON Çıktısı Al</button>
@@ -21,10 +23,9 @@
     
     <div id="canvas-container">
         <img id="mangaPage" src="" style="display:none;">
+        <img id="cleanPage" src="" style="display:none; position: absolute; top:0; left:0; width:100%; height:100%; z-index: 5;">
     </div>
 
     <script src="script.js"></script>
 </body>
 </html>
-
-
