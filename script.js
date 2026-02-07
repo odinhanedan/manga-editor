@@ -107,9 +107,12 @@ function createOverlay(text, x, y, w, h) {
     canvas.appendChild(div);
 }
 
-function addText() {
+window.addText = function () {
 
-    if (!mangaPage.naturalWidth) return alert("Resim yüklenmedi");
+    if (!mangaPage.complete) {
+        alert("Resim henüz tam yüklenmedi.");
+        return;
+    }
 
     const rect = mangaPage.getBoundingClientRect();
 
@@ -118,13 +121,13 @@ function addText() {
     div.contentEditable = true;
     div.innerText = "Yeni Metin";
 
-    div.style.left = (rect.width/2 - 100) + "px";
-    div.style.top = (rect.height/2 - 25) + "px";
+    div.style.left = (rect.width / 2 - 100) + "px";
+    div.style.top = (rect.height / 2 - 25) + "px";
     div.style.width = "200px";
 
     setupDraggable(div);
     canvas.appendChild(div);
-}
+};
 
 function setupDraggable(div) {
 
@@ -205,3 +208,4 @@ window.downloadJPG = function () {
     link.click();
     document.body.removeChild(link);
 };
+
