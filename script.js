@@ -185,3 +185,23 @@ function downloadJPG() {
     link.download = "page.jpg";
     link.click();
 }
+
+
+window.downloadJPG = function () {
+
+    let source = cleanPage.style.display !== "none" && cleanPage.src
+        ? cleanPage.src
+        : mangaPage.src;
+
+    if (!source) {
+        alert("İndirilecek görsel yok.");
+        return;
+    }
+
+    let link = document.createElement("a");
+    link.href = source;
+    link.download = "manga_page.jpg";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
