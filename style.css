@@ -41,7 +41,6 @@ body {
     height: 100%;
     z-index: 5;
     pointer-events: none;
-    transition: opacity 0.3s;
 }
 
 .text-overlay {
