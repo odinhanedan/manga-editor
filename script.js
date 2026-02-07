@@ -14,19 +14,24 @@ imageLoader.addEventListener('change', function(e) {
 });
 
 function loadPage(index) {
+    // Sayfa değişince her şeyi sıfırla
     document.querySelectorAll('.text-overlay').forEach(el => el.remove());
     cleanPage.style.display = 'none';
     cleanPage.src = "";
     cleanPage.style.opacity = '1';
+    
     let reader = new FileReader();
-    reader.onload = (e) => { mangaPage.src = e.target.result; mangaPage.style.display = 'block'; };
+    reader.onload = (e) => { 
+        mangaPage.src = e.target.result; 
+        mangaPage.style.display = 'block'; 
+    };
     reader.readAsDataURL(images[index]);
     pageInfo.innerText = `${index + 1} / ${images.length}`;
 }
 
 async function runOCR() {
     if (!mangaPage.src) return;
-    pageInfo.innerText = "🌀 Analiz ediliyor...";
+    pageInfo.innerText = "🌀 Tori AI Temizliyor...";
     document.querySelectorAll('.text-overlay').forEach(el => el.remove());
 
     try {
@@ -42,22 +47,34 @@ async function runOCR() {
         });
 
         const result = await apiResponse.json();
+        console.log("Tori Yanıtı Analiz Edildi:", result);
 
-        // 🎯 HATAYI ÇÖZEN KISIM: Senin logunda gelen isim "inpainted"
+        // 🎯 KRİTİK DÜZELTME: Senin logundaki isme (inpainted) göre eşitledik
         if (result.inpainted) {
             cleanPage.src = result.inpainted;
             cleanPage.style.display = 'block';
-            cleanPage.style.zIndex = "1"; // Resim altta
+            cleanPage.style.zIndex = "1"; // Resim arka planda kalsın
+            console.log("Temiz resim katmana yerleşti.");
         }
 
+        // Metinleri ekle
         if (result.text) {
             result.text.forEach(obj => {
-                // Sadece çevrilmiş metni ekle
-                createToriOverlay(obj.text, [obj.x - obj.width/2, obj.y - obj.height/2, obj.x + obj.width/2, obj.y + obj.height/2]);
+                // Sadece çeviriyi bas (Çift metin sorununu çözer)
+                createToriOverlay(obj.text, [
+                    obj.x - obj.width/2, 
+                    obj.y - obj.height/2, 
+                    obj.x + obj.width/2, 
+                    obj.y + obj.height/2
+                ]);
             });
         }
-    } catch (error) { alert("Hata oluştu!"); }
-    finally { pageInfo.innerText = `${currentIndex + 1} / ${images.length}`; }
+    } catch (error) { 
+        console.error("Hata:", error);
+        alert("API Hatası!"); 
+    } finally { 
+        pageInfo.innerText = `${currentIndex + 1} / ${images.length}`; 
+    }
 }
 
 function createToriOverlay(text, box) {
@@ -73,23 +90,28 @@ function createToriOverlay(text, box) {
     div.style.left = (box[0] * scaleX) + 'px';
     div.style.top = (box[1] * scaleY) + 'px';
     div.style.width = ((box[2] - box[0]) * scaleX) + 'px';
-    div.style.zIndex = "100"; // Metin her zaman en üstte
+    div.style.zIndex = "100"; // Metin kutuları her zaman en üstte
     
     setupDraggable(div);
     canvas.appendChild(div);
 }
 
+// 🎯 METİN EKLEME BUTONU TAMİRİ
 function addText() {
     let div = document.createElement('div');
     div.className = 'text-overlay';
     div.contentEditable = true;
     div.innerText = 'Yeni Metin';
-    div.style.left = '50px'; // Sol üstte başlasın ki kaybolmasın
+    
+    // Resmin görünür alanına ekle
+    div.style.left = '50px';
     div.style.top = '50px';
-    div.style.zIndex = "100"; 
-    div.style.border = "1px dashed red";
+    div.style.zIndex = "101"; // Temiz resmin (1) ve diğer metinlerin (100) üstünde
+    div.style.border = "1px dashed red"; // Nerede olduğunu gör diye
+    
     setupDraggable(div);
     canvas.appendChild(div);
+    console.log("Yeni metin kutusu eklendi.");
 }
 
 function setupDraggable(div) {
@@ -98,30 +120,37 @@ function setupDraggable(div) {
         let cRect = canvas.getBoundingClientRect();
         let shiftX = e.clientX - div.getBoundingClientRect().left;
         let shiftY = e.clientY - div.getBoundingClientRect().top;
-        document.onmousemove = (e) => {
+        
+        document.onmousemove = function(e) {
             div.style.left = (e.clientX - cRect.left - shiftX) + 'px';
             div.style.top = (e.clientY - cRect.top - shiftY) + 'px';
         };
-        document.onmouseup = () => { document.onmousemove = null; };
+        
+        document.onmouseup = function() {
+            document.onmousemove = null;
+        };
     };
 }
 
 function toggleCleanView() {
+    // Görünürlüğü (opacity) 0 ile 1 arasında değiştir
     cleanPage.style.opacity = (cleanPage.style.opacity === '0') ? '1' : '0';
+    console.log("Katman değiştirildi.");
 }
 
 function downloadJPG() {
-    if (!cleanPage.src) return;
-    let link = document.createElement('a');
-    link.href = cleanPage.src;
-    link.download = "temiz.jpg";
-    link.click();
+    if (!cleanPage.src) { alert("Önce temiz resim lazım!"); return; }
+    let a = document.createElement('a');
+    a.href = cleanPage.src;
+    a.download = "temizlenmis_manga.jpg";
+    a.click();
 }
 
 function exportJSON() {
     let overlays = document.querySelectorAll('.text-overlay');
     const cRect = canvas.getBoundingClientRect();
     let data = { translations: [] };
+    
     overlays.forEach(el => {
         data.translations.push({
             text: el.innerText,
@@ -129,6 +158,10 @@ function exportJSON() {
             y: ((parseFloat(el.style.top) / cRect.height) * 100).toFixed(2) + "%"
         });
     });
+    
     let blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    let a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "madara.json"; a.click();
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "madara_uyumlu.json";
+    link.click();
 }
