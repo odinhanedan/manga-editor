@@ -219,10 +219,7 @@ function downloadJPG() {
     link.click();
 }
 
-// ======================
-// JSON EXPORT
-// ======================
-function exportJSON() {
+window.exportJSON = function () {
 
     let overlays = document.querySelectorAll(".text-overlay");
     let cRect = canvas.getBoundingClientRect();
@@ -251,4 +248,9 @@ function exportJSON() {
     link.href = URL.createObjectURL(blob);
     link.download = "madara_export.json";
     link.click();
-}
+};
+
+
+
+
+
