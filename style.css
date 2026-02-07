@@ -1,59 +1,38 @@
-/* GENEL SAYFA YAPISI */
-body { 
-    font-family: sans-serif; 
-    background: #f0f0f0; 
-    margin: 20px; 
-    text-align: center; 
+body {
+    font-family: sans-serif;
+    background: #f0f0f0;
+    margin: 20px;
+    text-align: center;
 }
 
-/* ÜST MENÜ (TOOLBAR) */
-.toolbar { 
-    background: white; 
-    padding: 15px; 
-    border-radius: 0 0 8px 8px; 
-    margin-bottom: 20px; 
-    display: flex; 
-    justify-content: center; 
-    gap: 10px; 
+.toolbar {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
     align-items: center;
-    position: sticky; 
-    top: 0; 
-    z-index: 1000; 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
-/* BUTONLAR İÇİN GENEL STİL */
-button {
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: 0.3s;
-}
-
-button:hover {
-    opacity: 0.8;
-}
-
-/* ÇALIŞMA ALANI (KANVAS) */
-#canvas-container { 
-    position: relative; 
-    display: inline-block; 
-    background: white; 
+#canvas-container {
+    position: relative;
+    display: inline-block;
+    background: white;
     border: 1px solid #ccc;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    line-height: 0; /* Resim altındaki boşluğu siler */
 }
 
-/* ANA RESİM */
-#mangaPage { 
-    max-width: 800px; 
-    height: auto; 
+#mangaPage {
+    max-width: 800px;
     display: block;
+    position: relative;
+    z-index: 1;
 }
 
-/* TORI'DEN GELEN TEMİZ RESİM (ÜST KATMAN) */
 #cleanPage {
     position: absolute;
     top: 0;
@@ -61,26 +40,26 @@ button:hover {
     width: 100%;
     height: 100%;
     z-index: 5;
-    transition: opacity 0.3s ease; /* Göz butonuna basınca yumuşak geçiş yapar */
-    pointer-events: none; /* Üstteyken metinlere tıklamanı engellemez */
+    pointer-events: none;
+    transition: opacity 0.3s;
 }
 
-/* METİN BALONLARI */
 .text-overlay {
     position: absolute;
     cursor: move;
     padding: 5px;
     font-weight: bold;
     color: black;
-    text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff;
-    min-width: 50px;
-    border: 1px dashed transparent;
-    z-index: 10; /* Her zaman resimlerin üstünde kalır */
-    line-height: 1.2;
     text-align: center;
+    min-width: 50px;
+    z-index: 10;
+    text-shadow: 2px 2px 0 #fff,
+                 -2px -2px 0 #fff,
+                 2px -2px 0 #fff,
+                 -2px 2px 0 #fff;
+    border: 1px dashed transparent;
 }
 
-.text-overlay:hover { 
-    border-color: blue; 
-    background: rgba(0, 123, 255, 0.1); /* Üzerine gelince belli olur */
+.text-overlay:hover {
+    border-color: blue;
 }
