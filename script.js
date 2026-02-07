@@ -33,6 +33,8 @@ function loadPage(index) {
 
 async function runOCR() {
 
+    async function runOCR() {
+
     if (!mangaPage.src) {
         alert("Resim yukle");
         return;
@@ -53,31 +55,25 @@ async function runOCR() {
             {
                 method: "POST",
                 headers: {
-                    "Authorization": "Bearer " + TORI_API_KEY,
-                    "target_lang": "tr",
-                    "translator": "gemini-2.5-flash",
-                    "font": "wildwords",
-                    "text_align": "auto",
-                    "stroke_disabled": "false",
-                    "min_font_size": "12"
+                    Authorization: "Bearer " + TORI_API_KEY,
+                    target_lang: "tr",
+                    translator: "gemini-2.5-flash",
+                    font: "wildwords"
                 },
                 body: formData
             }
         );
 
         const result = await apiRes.json();
-        console.log("Gelen Veri:", result);
+        console.log(result);
 
-        // CLEAN IMAGE
         if (result.inpainted) {
             cleanPage.src = result.inpainted;
             cleanPage.style.display = "block";
         }
 
-        // eski yazıları sil
         document.querySelectorAll(".text-overlay").forEach(el => el.remove());
 
-        // SADECE CEVRILMIS METIN
         if (result.text) {
             result.text.forEach(obj => {
                 createOverlayScaled(
@@ -91,12 +87,13 @@ async function runOCR() {
         }
 
     } catch (error) {
-        console.error(error);
+        console.error("HATA:", error);
         alert("API hatasi");
     }
 
     pageInfo.innerText = (currentIndex + 1) + " / " + images.length;
 }
+
 
 /* 🔥 TORI SCALELI OVERLAY */
 function createOverlayScaled(text, x, y, w, h) {
@@ -207,3 +204,4 @@ function exportJSON() {
     a.download = "madara.json";
     a.click();
 }
+
