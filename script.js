@@ -10,12 +10,11 @@ const TORI_API_KEY = "BURAYA_API_KEYINI_YAZ".trim();
 
 document.getElementById("imageLoader").addEventListener("change", function (e) {
     images = Array.from(e.target.files);
-    if (images.length > 0) {
-        loadPage(0);
-    }
+    if (images.length > 0) loadPage(0);
 });
 
 function loadPage(index) {
+
     currentIndex = index;
 
     document.querySelectorAll(".text-overlay").forEach(el => el.remove());
@@ -69,19 +68,19 @@ async function runOCR() {
         const result = await apiRes.json();
         console.log("Gelen Veri:", result);
 
-        // Temiz görsel
+        // CLEAN IMAGE
         if (result.inpainted) {
             cleanPage.src = result.inpainted;
             cleanPage.style.display = "block";
         }
 
-        // Eski yazıları sil
+        // eski yazıları sil
         document.querySelectorAll(".text-overlay").forEach(el => el.remove());
 
-        // SADECE CEVRILMIS METNI KULLAN
+        // SADECE CEVRILMIS METIN
         if (result.text) {
             result.text.forEach(obj => {
-                createOverlay(
+                createOverlayScaled(
                     obj.text,
                     obj.x,
                     obj.y,
@@ -99,7 +98,8 @@ async function runOCR() {
     pageInfo.innerText = (currentIndex + 1) + " / " + images.length;
 }
 
-function createOverlay(text, x, y, w, h) {
+/* 🔥 TORI SCALELI OVERLAY */
+function createOverlayScaled(text, x, y, w, h) {
 
     let div = document.createElement("div");
     div.className = "text-overlay";
@@ -118,24 +118,24 @@ function createOverlay(text, x, y, w, h) {
     canvas.appendChild(div);
 }
 
-/* SENIN CALISAN ORIJINAL METIN EKLE */
+/* 🔥 SENIN ILK CALISAN METIN EKLE SISTEMIN */
 function addText() {
 
-    let div = document.createElement("div");
-    div.className = "text-overlay";
+    let div = document.createElement('div');
+    div.className = 'text-overlay';
     div.contentEditable = true;
-    div.innerText = "New Text";
+    div.innerText = 'New Text';
 
     const rect = canvas.getBoundingClientRect();
 
     let finalX = (window.innerWidth / 2) - rect.left - 75;
     let finalY = (window.innerHeight / 2) - rect.top - 20;
 
-    div.style.left = finalX + "px";
-    div.style.top = finalY + "px";
-    div.style.width = "150px";
-    div.style.minHeight = "40px";
-    div.style.zIndex = "9999";
+    div.style.left = finalX + 'px';
+    div.style.top = finalY + 'px';
+    div.style.width = '150px';
+    div.style.minHeight = '40px';
+    div.style.zIndex = '9999';
 
     setupDraggable(div);
     canvas.appendChild(div);
@@ -170,6 +170,21 @@ function toggleCleanView() {
         cleanPage.style.display === "none" ? "block" : "none";
 }
 
+function downloadJPG() {
+
+    let source = cleanPage.src || mangaPage.src;
+
+    if (!source) {
+        alert("Indirilecek gorsel yok");
+        return;
+    }
+
+    let link = document.createElement("a");
+    link.href = source;
+    link.download = "manga_page.jpg";
+    link.click();
+}
+
 function exportJSON() {
 
     let overlays = document.querySelectorAll(".text-overlay");
@@ -191,19 +206,4 @@ function exportJSON() {
     a.href = URL.createObjectURL(blob);
     a.download = "madara.json";
     a.click();
-}
-
-function downloadJPG() {
-
-    let source = cleanPage.src || mangaPage.src;
-
-    if (!source) {
-        alert("Indirilecek gorsel yok");
-        return;
-    }
-
-    let link = document.createElement("a");
-    link.href = source;
-    link.download = "manga_page.jpg";
-    link.click();
 }
