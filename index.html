@@ -1,24 +1,40 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <title>Manga Editor Final</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Madara Manga Editor</title>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-    <div class="toolbar">
-        <input type="file" id="imageLoader" accept="image/*" multiple>
-        <button onclick="runOCR()" style="background:#007bff; color:white;">AI TARA & TEMİZLE</button>
-        <button onclick="toggleCleanView()" id="toggleBtn">👁️ KATMAN DEĞİŞTİR</button>
-        <button onclick="addText()">+ METİN EKLE</button>
-        <button onclick="downloadJPG()" style="background:orange;">JPG İNDİR</button>
-        <button onclick="exportJSON()" style="background:green; color:white;">JSON AL</button>
-        <span id="pageInfo">0 / 0</span>
-    </div>
-    <div id="canvas-container">
-        <img id="mangaPage" src="">
-        <img id="cleanPage" src="" style="display:none;">
-    </div>
-    <script src="script.js"></script>
+
+<div class="toolbar">
+    <input type="file" id="imageLoader" accept="image/*" multiple>
+
+    <button onclick="runOCR()" style="background:#007bff;color:white;">
+        AI TARA & TEMİZLE
+    </button>
+
+    <button onclick="toggleCleanView()">👁️ KATMAN DEĞİŞTİR</button>
+
+    <button onclick="addText()">+ METİN EKLE</button>
+
+    <button onclick="downloadJPG()" style="background:orange;">
+        JPG İNDİR
+    </button>
+
+    <button onclick="exportJSON()" style="background:green;color:white;">
+        JSON AL
+    </button>
+
+    <span id="pageInfo">0 / 0</span>
+</div>
+
+<div id="canvas-container">
+    <img id="mangaPage">
+    <img id="cleanPage" style="display:none;">
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
